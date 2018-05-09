@@ -1,4 +1,4 @@
-﻿using Boo.Lang;
+﻿using System.Collections.Generic;
 using Types;
 using UnityEngine;
 
@@ -10,18 +10,24 @@ namespace Interfaces
         /// Get all the cells this feature will occupy
         /// </summary>
         /// <returns></returns>
-        List<CellData> GetCells();
-        
+        List<CellData> GetCells(HashSet<Vector2Int> existingTiles);
+
         /// <summary>
         /// Number of features this feature can make
         /// </summary>
         /// <returns></returns>
         int GetNewFeatureCount();
-        
+
         /// <summary>
         /// Get a random position for a new feature
         /// </summary>
         /// <returns></returns>
-        Vector2Int GetNewFeaturePosition();
+        FeaturePosition GetNewFeaturePosition();
+
+        /// <summary>
+        /// Check if we can add a new feature branching from this feature
+        /// </summary>
+        /// <returns></returns>
+        bool CanMakeNewFeature();
     }
 }

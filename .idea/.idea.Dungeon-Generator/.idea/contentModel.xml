@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="$USER_HOME$/Library/Caches/Rider2018.1/resharper-host/local/Transient/ReSharperHost/v12/SolutionCaches/_Dungeon-Generator.-362011642.00" t="ExcludeRecursive" />
+    <e p="$PROJECT_DIR$" t="IncludeRecursive">
+      <e p="Assembly-CSharp-Editor.csproj" t="IncludeRecursive" />
+      <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
+      <e p="Assets/PhiOS" t="Include">
+        <e p="Documentation" t="Include">
+          <e p="PhiOS_readme.txt" t="Include" />
+        </e>
+        <e p="Fonts" t="Include">
+          <e p="BMFonts" t="Include">
+            <e p="Source_Code_Pro" t="Include">
+              <e p="SIL Open Font License.txt" t="Include" />
+              <e p="Source_Code_Pro_Semibold_Bitmap.fnt" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Scripts" t="Include">
+          <e p="Examples" t="Include">
+            <e p="Example.cs" t="Include" />
+          </e>
+          <e p="PhiOS" t="Include">
+            <e p="Actions" t="Include">
+              <e p="IClickAction.cs" t="Include" />
+              <e p="IDragAction.cs" t="Include" />
+              <e p="IHoverAction.cs" t="Include" />
+              <e p="IScrollAction.cs" t="Include" />
+            </e>
+            <e p="BitmapFont.cs" t="Include" />
+            <e p="BitmapFontGlyph.cs" t="Include" />
+            <e p="Cell.cs" t="Include" />
+            <e p="Display.cs" t="Include" />
+            <e p="DisplayMesh.cs" t="Include" />
+            <e p="Editor" t="Include">
+              <e p="DisplayEditor.cs" t="Include" />
+            </e>
+            <e p="Mouse.cs" t="Include" />
+          </e>
+        </e>
+        <e p="Shaders" t="Include">
+          <e p="AlphaVertexColor.shader" t="Include" />
+        </e>
+      </e>
+      <e p="Assets/Scripts" t="Include">
+        <e p="CellPosition.cs" t="Include" />
+        <e p="CellType.cs" t="Include" />
+        <e p="Direction.cs" t="Include" />
+        <e p="DungeonGenerator.cs" t="Include" />
+        <e p="FeatureFactories" t="Include">
+          <e p="RoomFactory.cs" t="Include" />
+        </e>
+        <e p="Features" t="Include">
+          <e p="CorridorData.cs" t="Include" />
+          <e p="RoomData.cs" t="Include" />
+        </e>
+        <e p="GameProperties.cs" t="Include" />
+        <e p="Interfaces" t="Include">
+          <e p="IFeature.cs" t="Include" />
+          <e p="IFeatureFactory.cs" t="Include" />
+        </e>
+        <e p="RandomVector.cs" t="Include" />
+        <e p="RectExtensions.cs" t="Include" />
+        <e p="Singleton.cs" t="Include" />
+        <e p="Types" t="Include">
+          <e p="CellData.cs" t="Include" />
+          <e p="FeaturePosition.cs" t="Include" />
+          <e p="RenderInfo.cs" t="Include" />
+        </e>
+        <e p="VectorExtensions.cs" t="Include" />
+      </e>
+      <e p="Dungeon-Generator.sln" t="IncludeFlat" />
+      <e p="Library" t="ExcludeRecursive" />
+      <e p="obj" t="ExcludeRecursive" />
+      <e p="packages" t="ExcludeRecursive" />
+      <e p="Temp" t="ExcludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+      </e>
+    </e>
+  </component>
+</project>

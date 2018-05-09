@@ -19,8 +19,10 @@ namespace PhiOS.Scripts.PhiOS
 		private float screenXMax = 0f;
 		private float screenYMin = 0f;
 		private float screenYMax = 0f;
-		private Cell currentCell;
-		private Cell currentCellHover;
+		
+		public static Cell currentCell;
+		public static Cell currentCellHover;
+		
 		private IHoverAction hoverAction;
 		private bool dragging = false;
 		private Vector2 dragStart;

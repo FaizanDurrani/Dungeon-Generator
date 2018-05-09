@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
+using Types;
 using UnityEngine;
 
 namespace Interfaces
 {
     public interface IFeatureFactory
     {
-        void CreateFeature(Vector2Int postion, Vector2Int size, out int featureCount);
-        bool CanCreateFeature(Vector2Int postion, Vector2Int size, HashSet<Vector2Int> existingTiles);
+        bool TryCreateFeature(FeaturePosition postion, Vector2Int size, HashSet<Vector2Int> existingTiles, ref IFeature feature);
+        bool CanCreateFeature(FeaturePosition postion, Vector2Int size, HashSet<Vector2Int> existingTiles);
+        List<CellData> GetCellsFromAllFeatures(HashSet<Vector2Int> existingTiles);
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 [Serializable]
-public struct RandomVector2Int
+public struct Vector2IntMinMax
 {
     public Vector2Int Min, Max;
 

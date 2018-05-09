@@ -1,20 +1,23 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using Display = PhiOS.Scripts.PhiOS.Display;
 
 namespace Types
 {
+    [Serializable]
     public struct RenderInfo
     {
-        public readonly string Representation;
-        public readonly Color32 ForeColor;
-        public readonly Color32 BackColor;
-        public readonly int Layer;
+        public string Representation;
+        public Color ForeColor;
+        public Color BackColor;
+        public Color HiddenTint;
 
-        public RenderInfo(string representation, string description, Color32 foreColor, Color32 backColor, int layer)
+        public RenderInfo(RenderInfo r)
         {
-            Representation = representation;
-            ForeColor = foreColor;
-            BackColor = backColor;
-            Layer = layer;
+            Representation = r.Representation;
+            ForeColor = r.ForeColor;
+            BackColor = r.BackColor;
+            HiddenTint = r.HiddenTint;
         }
     }
 }

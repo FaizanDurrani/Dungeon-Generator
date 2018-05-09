@@ -54,6 +54,7 @@
         </e>
         <e p="Scripts" t="Include">
           <e p="CellPosition.cs" t="Include" />
+          <e p="CellRenderer.cs" t="Include" />
           <e p="CellType.cs" t="Include" />
           <e p="Direction.cs" t="Include" />
           <e p="DungeonGenerator.cs" t="Include" />
@@ -64,16 +65,20 @@
             <e p="CorridorData.cs" t="Include" />
             <e p="RoomData.cs" t="Include" />
           </e>
-          <e p="GameProperties.cs" t="Include" />
+          <e p="GameSettings.cs" t="Include" />
+          <e p="GameTick.cs" t="Include" />
           <e p="Interfaces" t="Include">
             <e p="IFeature.cs" t="Include" />
             <e p="IFeatureFactory.cs" t="Include" />
           </e>
+          <e p="Player.cs" t="Include" />
           <e p="RandomVector.cs" t="Include" />
           <e p="RectExtensions.cs" t="Include" />
           <e p="Singleton.cs" t="Include" />
           <e p="Types" t="Include">
             <e p="CellData.cs" t="Include" />
+            <e p="Dungeon.cs" t="Include" />
+            <e p="FeaturePosition.cs" t="Include" />
             <e p="RenderInfo.cs" t="Include" />
           </e>
           <e p="VectorExtensions.cs" t="Include" />

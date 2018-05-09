@@ -38,7 +38,7 @@ namespace Features
             Direction = direction;
         }
     
-        public void AddCells(HashSet<Vector2Int> floor, List<CellData> cells, string rep, Color foreColor, Color backColor)
+        public void AddCells(HashSet<Vector2Int> floor, List<CellData> cells)
         {
             for (int i = 0; i < Size; i++)
             {
@@ -61,10 +61,10 @@ namespace Features
                         throw new ArgumentOutOfRangeException();
                 }
 
-                var cell = new CellData(position, 0, foreColor);
+//                var cell = new CellData(position, 0, foreColor);
 
                 if (!floor.Contains(position)) floor.Add(position);
-                cells.Add(cell);
+//                cells.Add(cell);
                 //else cells.Add(position, new List<CellData>{cell});
             }
         }

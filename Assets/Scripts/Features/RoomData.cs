@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Interfaces;
 using Types;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -7,12 +8,12 @@ using Random = UnityEngine.Random;
 namespace Features
 {
     [Serializable]
-    public struct RoomData
+    public struct RoomData : IFeature
     {
         /// <summary>
         /// Starts from (0, 0).
         /// </summary>
-        public Vector2Int Position;
+        public FeaturePosition Position;
 
         /// <summary>
         /// Will be greater than (0, 0). Never negative
@@ -20,65 +21,55 @@ namespace Features
         public Vector2Int Size;
 
         /// <summary>
-        /// Bounds of this room
+        /// Rect of this room
         /// </summary>
         public Rect Bounds;
 
-        public RoomData(Vector2Int position, Vector2Int size) : this()
+        /// <summary>
+        /// How this room will be rendered
+        /// </summary>
+        public RenderInfo RenderInfo;
+
+        public Vector2Int Entrance;
+
+        // https://pastebin.com/38auMjRA
+
+        private List<Direction> _directions;
+
+        public RoomData(FeaturePosition position, Vector2Int size, Vector2Int entrance, RenderInfo rInfo)
         {
-            Size = size;
             Position = position;
-            Bounds.Set(position.x, position.y, size.x, size.y);
-        }
-
-        public RoomData(CorridorData corridor, Vector2Int size) : this()
-        {
+            RenderInfo = rInfo;
             Size = size;
-            CellPosition pos;
-            switch (corridor.Direction)
-            {
-                case Direction.Bottom:
-                    pos.X = corridor.EndPosition.x - Random.Range(0, size.x);
-                    pos.Y = corridor.EndPosition.y;
-                    break;
-                case Direction.Right:
-                    pos.X = corridor.EndPosition.x;
-                    pos.Y = corridor.EndPosition.y - Random.Range(0, size.y);
-                    break;
-                case Direction.Top:
-                    pos.X = corridor.EndPosition.x - Random.Range(0, size.x);
-                    pos.Y = corridor.EndPosition.y - size.y + 1;
-                    break;
-                case Direction.Left:
-                    pos.X = corridor.EndPosition.x - size.x + 1;
-                    pos.Y = corridor.EndPosition.y - Random.Range(0, size.y);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            Position = pos.ToVector2Int();
-            if (Position.x < 1)
-                Position.x = 1;
-            if (Position.y < 1)
-                Position.y = 1;
-
+            Entrance = entrance;
+            Bounds = new Rect();
             Bounds.Set(Position.x, Position.y, size.x, size.y);
+            _directions = new List<Direction> {Direction.Bottom, Direction.Left, Direction.Right, Direction.Top};
+
+            var intD = (int) position.Direction;
+            if (position.Direction != Direction.None)
+            {
+                if (intD > 1)
+                    _directions.Remove((Direction) intD - 2);
+                else
+                    _directions.Remove((Direction) intD + 2);
+            }
         }
 
-        public void AddCells(HashSet<Vector2Int> floor, List<CellData> cells, string representation, Color foreColor,
-            Color backColor)
+        public List<CellData> GetCells(HashSet<Vector2Int> existingTiles)
         {
+            List<CellData> cells = new List<CellData> {new CellData(Entrance, CellType.Floor, RenderInfo)};
+            if (!existingTiles.Contains(Entrance)) existingTiles.Add(Entrance);
+
             Vector2Int position = Vector2Int.zero;
+
             for (int i = 0; i < Size.x * Size.y; i++)
             {
                 var cell = new CellData(position + Position,
-                    0,
-                    foreColor);
+                    CellType.Floor, RenderInfo);
 
-                if (!floor.Contains(cell.Position)) floor.Add(cell.Position);
+                existingTiles.Add(cell.Position);
                 cells.Add(cell);
-                //else cells.Add(cell.Position, new List<CellData> {cell});
 
                 if (position.x == Size.x - 1)
                 {
@@ -87,41 +78,82 @@ namespace Features
                 }
                 else position.x++;
             }
+
+            return cells;
         }
 
-        public CorridorData GetCorridor(int size, CorridorData lastCorridor)
+        public int GetNewFeatureCount()
         {
-            RandomVector2Int rand = new RandomVector2Int();
+            return _directions.Count;
+        }
 
-            Direction d = (Direction) Random.Range(0, 4);
+        public FeaturePosition GetNewFeaturePosition()
+        {
+            /*
+             * # = possible position to return
+             * F = actual room floor
+             * 
+             *            
+             *            FFFFFF
+             *           F000000F
+             *           F000000F
+             *           F000000F
+             *           F000000F
+             *            FFFFFF
+             *           
+             */
+
+            Vector2IntMinMax rand = new Vector2IntMinMax();
+            Vector2Int pos = Vector2Int.zero;
+//            Direction d = Direction.Right;
+            Direction d = _directions[Random.Range(0, _directions.Count)];
             switch (d)
             {
                 case Direction.Top:
                     rand.Min = Bounds.TopLeft().ToVector2Int();
+                    rand.Min.y -= 1;
+
                     rand.Max = Bounds.TopRight().ToVector2Int();
+                    rand.Max.y -= 1;
+
+                    pos = rand.GetRandomValue();
                     break;
                 case Direction.Left:
                     rand.Min = Bounds.BottomLeft().ToVector2Int();
+                    rand.Min.x -= 1;
+
                     rand.Max = Bounds.TopLeft().ToVector2Int();
+                    rand.Max.x -= 1;
+
+                    pos = rand.GetRandomValue();
                     break;
                 case Direction.Right:
                     rand.Min = Bounds.BottomRight().ToVector2Int();
+                    rand.Min.x += 1;
+
                     rand.Max = Bounds.TopRight().ToVector2Int();
+                    rand.Max.x += 1;
+
+                    pos = rand.GetRandomValue();
                     break;
                 case Direction.Bottom:
                     rand.Min = Bounds.BottomLeft().ToVector2Int();
+                    rand.Min.y += 1;
+
                     rand.Max = Bounds.BottomRight().ToVector2Int();
+                    rand.Max.y += 1;
+
+                    pos = rand.GetRandomValue();
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException();
             }
 
-            var c = new CorridorData(rand.GetRandomValue(), size, d);
+            _directions.Remove(d);
+            return new FeaturePosition(pos.x, pos.y, d);
+        }
 
-            if (c.EndPosition.x < 1 || c.EndPosition.y < 1 ||
-                (lastCorridor.Direction != d && ((int) lastCorridor.Direction + (int) d) % 2 == 0))
-                return GetCorridor(size, lastCorridor);
-            return c;
+        public bool CanMakeNewFeature()
+        {
+            return _directions.Count > 0;
         }
     }
 }
