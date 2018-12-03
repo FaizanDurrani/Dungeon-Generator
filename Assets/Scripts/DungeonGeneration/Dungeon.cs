@@ -116,7 +116,7 @@ namespace DungeonGeneration
                         {
                             var floorTile = ScriptableObject.CreateInstance<WallTile>();
                             floorTile.colliderType = Tile.ColliderType.None;
-                            floorTile.color =  GameSettings.Instance.WallTileData.Color;
+                            floorTile.color =  GameSettings.Instance.HiddenColor;
                             floorTile.sprite = GameSettings.Instance.WallTileData.Sprite;
                             
                             Tilemap.SetTile(neighbour, floorTile);

@@ -9,6 +9,6 @@ namespace Singletons
     public class GameSettings : Singleton<GameSettings>
     {
         public RenderInfo FloorTileData, WallTileData;
-        public Color HiddenColor;
+        public Color HiddenColor, DiscoveredColor;
     }
 }

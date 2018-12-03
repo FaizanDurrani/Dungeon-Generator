@@ -58,7 +58,7 @@ namespace DungeonGeneration.Features
 
             var tile = ScriptableObject.CreateInstance<FloorTile>();
             tile.colliderType = Tile.ColliderType.None;
-            tile.color = GameSettings.Instance.FloorTileData.Color;
+            tile.color = GameSettings.Instance.HiddenColor;
             tile.sprite = GameSettings.Instance.FloorTileData.Sprite;
 
             tilemap.SetTile(entrance, tile);
@@ -69,7 +69,7 @@ namespace DungeonGeneration.Features
             {
                 tile = ScriptableObject.CreateInstance<FloorTile>();
                 tile.colliderType = Tile.ColliderType.None;
-                tile.color = GameSettings.Instance.FloorTileData.Color;
+                tile.color = GameSettings.Instance.HiddenColor;
                 tile.sprite = GameSettings.Instance.FloorTileData.Sprite;
 
                 tilemap.SetTile(position + tilepos, tile);

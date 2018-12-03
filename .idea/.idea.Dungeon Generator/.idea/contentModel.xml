@@ -6,6 +6,10 @@
     <e p="D:\Unity Projects\Dungeon Generator" t="IncludeRecursive">
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
       <e p="Assets" t="Include">
+        <e p="instant_dungeon_artpack" t="Include">
+          <e p="instant_dungeon_artpack_README.txt" t="Include" />
+          <e p="OGA-BY-3.0.txt" t="Include" />
+        </e>
         <e p="Scripts" t="Include">
           <e p="DungeonGeneration" t="Include">
             <e p="Dungeon.cs" t="Include" />
@@ -28,13 +32,6 @@
               <e p="WallTile.cs" t="Include" />
             </e>
           </e>
-          <e p="Enemies" t="Include">
-            <e p="EnemyHandler.cs" t="Include" />
-            <e p="Entities" t="Include">
-              <e p="IEnemy.cs" t="Include" />
-              <e p="Slime.cs" t="Include" />
-            </e>
-          </e>
           <e p="Enums" t="Include">
             <e p="CellType.cs" t="Include" />
             <e p="Direction.cs" t="Include" />
@@ -51,13 +48,11 @@
           <e p="Rendering" t="Include">
             <e p="CameraController.cs" t="Include" />
             <e p="RenderInfo.cs" t="Include" />
-            <e p="UserInterfaceRenderer.cs" t="Include" />
           </e>
           <e p="Singletons" t="Include">
             <e p="GameSettings.cs" t="Include" />
             <e p="Player.cs" t="Include" />
             <e p="Singleton.cs" t="Include" />
-            <e p="TurnSystem.cs" t="Include" />
           </e>
           <e p="Structs" t="Include">
             <e p="Vector3IntMinMax.cs" t="Include" />

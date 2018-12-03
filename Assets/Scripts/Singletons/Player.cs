@@ -19,7 +19,7 @@ namespace Singletons
         public int FieldOfView;
 
         private AstarPath _path;
-        private HashSet<Vector3Int> _visibleTiles;
+        private HashSet<Vector3Int> _visibleTiles = new HashSet<Vector3Int>();
 
         public void Spawn(Vector3Int pos)
         {
@@ -44,7 +44,7 @@ namespace Singletons
                         Camera.main.ScreenToWorldPoint(Input.mousePosition)));
             }
 
-            if (_path == null || _path.Completed || !TurnSystem.Instance.PlayerTurn)
+            if (_path == null || _path.Completed)
                 return;
 
             SetFieldOfView(DungeonGenerator.Instance.CurrentDungeon.Tilemap.WorldToCell(transform.position),
@@ -55,7 +55,6 @@ namespace Singletons
             SetFieldOfView(DungeonGenerator.Instance.CurrentDungeon.Tilemap.WorldToCell(transform.position),
                 FieldOfView, true);
 
-            TurnSystem.Instance.PlayerTurn = false;
         }
 
         private void SetFieldOfView(Vector3Int position, int radius, bool visible)
@@ -80,7 +79,7 @@ namespace Singletons
                     if (!currentDungeon.Tilemap.HasTile(tilePos)) continue;
 
                     currentDungeon.Tilemap.SetColor(tilePos,
-                        visible ? Color.white : GameSettings.Instance.HiddenColor);
+                        visible ? Color.white : GameSettings.Instance.DiscoveredColor);
                     currentDungeon.Tilemap.SetTileFlags(tilePos, TileFlags.None);
 
                     if (visible)
