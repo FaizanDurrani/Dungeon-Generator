@@ -4,56 +4,33 @@ using Rendering;
 using Singletons;
 using Structs;
 using UnityEngine;
-using Display = PhiOS.Scripts.PhiOS.Display;
+using UnityEngine.Tilemaps;
 
 namespace DungeonGeneration
 {
     public class DungeonGenerator : Singleton<DungeonGenerator>
     {
         [SerializeField] private int _features;
-        [SerializeField] private Vector2IntMinMax _roomSize;
+        [SerializeField] private Vector3IntMinMax _roomSize;
+        [SerializeField] private Tilemap _tilemap;
 
         public List<Dungeon> DungeonLayers;
         public int CurrentLayer;
         public Dungeon CurrentDungeon => DungeonLayers[CurrentLayer];
 
-        private IEnumerator Start()
+        private void Start()
         {
-            if (GameSettings.Instance == null)
-            {
-                Debug.LogError("NO GameSettings FOUND!!");
-                yield break;
-            }
-
-            if (CellRenderer.Instance == null)
-            {
-                Debug.LogError("NO CellRenderer FOUND!!");
-                yield break;
-            }
-
-            while (!Display.IsInitialized())
-            {
-                yield return null;
-            }
-        
             DungeonLayers = new List<Dungeon>();
             GenerateNewDungeonLayer();
         
             Player.Instance.Spawn(DungeonLayers[CurrentLayer].StartPos);
-            CellRenderer.Instance.Render = true;
-            TurnSystem.Instance.Initialize();
         }
 
         private void GenerateNewDungeonLayer()
         {
-            var dungeon = new Dungeon(_roomSize, _features);
+            var dungeon = new Dungeon(_roomSize, _features, _tilemap);
             dungeon.GenerateDungeon();
             DungeonLayers.Add(dungeon);
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Space)) StartCoroutine(Start());
         }
     }
 }

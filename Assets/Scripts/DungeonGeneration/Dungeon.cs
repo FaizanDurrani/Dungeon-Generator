@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using DungeonGeneration.FeatureFactories;
 using DungeonGeneration.Interfaces;
 using DungeonGeneration.Structs;
+using DungeonGeneration.Tiles;
 using Enums;
 using Extensions;
 using Pathfinding;
 using Singletons;
 using Structs;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
 namespace DungeonGeneration
@@ -16,33 +18,28 @@ namespace DungeonGeneration
     [Serializable]
     public class Dungeon
     {
-        public Vector2IntMinMax RoomSize { get; }
+        public Vector3IntMinMax RoomSize { get; }
         public int FeatureCount { get; }
-        public CellData[,] AllCells { private set; get; }
-        public Vector2Int GridSize { private set; get; }
-        public Vector2Int StartPos { private set; get; }
         public List<IFeature> AllFeatures { private set; get; }
         public Astar Astar { private set; get; }
+        public Tilemap Tilemap { private set; get; }
+        public Vector3Int StartPos { private set; get; }
 
         private int _currFeatureCount = 0;
-        private Vector2IntMinMax _grid;
-        private HashSet<Vector2Int> _floorPositions;
 
         // Temporary vars, cleared after they are used
         private Queue<IFeature> _featureQueue;
-        private List<CellData> _floorCells;
         private List<IFeatureFactory> _factories;
 
-        public Dungeon(Vector2IntMinMax roomSize, int features)
+        public Dungeon(Vector3IntMinMax roomSize, int features, Tilemap t)
         {
             FeatureCount = features;
             RoomSize = roomSize;
+            Tilemap = t;
         }
 
         public void GenerateDungeon()
         {
-            _floorPositions = new HashSet<Vector2Int>();
-            _floorCells = new List<CellData>();
             _factories = new List<IFeatureFactory> {new RoomFactory()};
             _featureQueue = new Queue<IFeature>();
 
@@ -50,89 +47,11 @@ namespace DungeonGeneration
             GenerateFeatures();
             // Second pass
             GenerateWalls();
-            // Thrid pass
-            CalculateGrid();
 
             Astar = new Astar();
             Astar.Initialize(this);
 
-            _floorCells = null;
             _factories = null;
-//            _features = null;
-        }
-
-        public bool CellExists(Vector2Int position)
-        {
-            return position.x >= 0 &&
-                   position.y >= 0 &&
-                   position.x < AllCells.GetLength(0) &&
-                   position.y < AllCells.GetLength(1) &&
-                   GetCell(position)?.GetRenderInfo().Representation != null;
-        }
-
-        public bool TryGetCell(Vector2Int position, out CellData c)
-        {
-            if (position.x >= 0 &&
-                position.y >= 0 &&
-                position.x < AllCells.GetLength(0) &&
-                position.y < AllCells.GetLength(1))
-            {
-                c = AllCells[position.x, position.y];
-                return c?.GetRenderInfo().Representation != null;
-            }
-
-            c = null;
-            return false;
-        }
-
-        public void SetAllCells(CellData[,] allCells)
-        {
-            AllCells = allCells;
-        }
-
-        public void SetCell(Vector2Int pos, CellData cell)
-        {
-            AllCells[pos.x, pos.y] = cell;
-        }
-
-        public CellData[,] GetAllCells()
-        {
-            return AllCells;
-        }
-
-        public CellData GetCell(Vector2Int pos)
-        {
-            return AllCells[pos.x, pos.y];
-        }
-
-        private void CalculateGrid()
-        {
-            // Get the grid size
-            GridSize = _grid.Max - _grid.Min;
-            // Initialize the array that will hold all the cells
-            AllCells = new CellData[GridSize.x + 1, GridSize.y + 1];
-
-            // Offset the start Position
-            StartPos -= _grid.Min;
-
-            // loop over all the tiles...
-            for (var index = 0; index < _floorCells.Count; index++)
-            {
-                var cellData = _floorCells[index];
-                cellData.Position -= _grid.Min;
-                cellData.RefreshNeighbourPositions();
-                AllCells[cellData.Position.x, cellData.Position.y] = cellData;
-            }
-
-            // Offset all the features
-            foreach (IFeature feature in AllFeatures)
-            {
-                feature.SetPosition(feature.GetPosition() - _grid.Min);
-            }
-
-            // Offset the grid
-            _grid.Min -= _grid.Min;
-            _grid.Max -= _grid.Min;
         }
 
         private void GenerateFeatures()
@@ -141,13 +60,13 @@ namespace DungeonGeneration
             _currFeatureCount = 0;
             // start top left
             FeaturePosition position = new FeaturePosition(1, 1, Direction.None);
-            Vector2Int size = RoomSize.GetRandomValue();
+            Vector3Int size = RoomSize.GetRandomValue();
             IFeature tempFeature = null;
 
-            StartPos = position + new Vector2Int(size.x / 2, size.y / 2);
+            StartPos = position + new Vector3Int(size.x / 2, size.y / 2, 0);
 
-            _factories[0].TryCreateFeature(position, size, _floorPositions, ref tempFeature);
-            _floorCells.AddRange(tempFeature.GetCells(_floorPositions));
+            _factories[0].TryCreateFeature(position, size.ToVector2Int(), Tilemap, ref tempFeature);
+
             _featureQueue.Enqueue(tempFeature);
             AllFeatures.Add(tempFeature);
 
@@ -159,88 +78,72 @@ namespace DungeonGeneration
 
                 position = lastFeature.GetNewFeaturePosition();
                 size = RoomSize.GetRandomValue();
+                Debug.Log($"feature at {position.ToString()} of size {size}");
 
                 IFeatureFactory factory = _factories[Random.Range(0, _factories.Count)];
                 IFeature newFeature = null;
-                if (factory.TryCreateFeature(position, size, _floorPositions, ref newFeature))
+                if (factory.TryCreateFeature(position, size.ToVector2Int(), Tilemap, ref newFeature))
                 {
                     lastFeature.AddExit(position);
                     AllFeatures.Add(newFeature);
 
-                    var cells = newFeature.GetCells(_floorPositions);
-                    _floorCells.AddRange(cells);
+
                     _featureQueue.Enqueue(newFeature);
                     _currFeatureCount++;
                 }
 
                 if (lastFeature.CanMakeNewFeature())
                     _featureQueue.Enqueue(lastFeature);
-            }
+            } 
         }
 
         private void GenerateWalls()
         {
-            _grid.Min = new Vector2Int(0, 0);
-            _grid.Max = new Vector2Int(0, 0);
             // loop through all the tiles
-            var temp = new List<CellData>(_floorCells);
-            foreach (var cellData in temp)
+            Vector3Int tilepos = Tilemap.origin;
+
+            for (int i = 0; i < Tilemap.size.x * Tilemap.size.y; i++)
             {
-                // check if the current tile is of type "floor"
-                if (cellData.Type == CellType.Floor)
+                FloorTile tile = Tilemap.GetTile<FloorTile>(tilepos);
+
+                if (tile != null)
                 {
-                    foreach (var neighbour in cellData.Neighbours)
+                    foreach (var neighbour in GetNeighboursByPosition(tilepos))
                     {
+                        FloorTile neighbourTile = Tilemap.GetTile<FloorTile>(neighbour);
                         // if there's no tile on the left side of the current tile...
-                        if (!_floorPositions.Contains(neighbour))
+                        if (neighbourTile == null)
                         {
-                            // ...make a wall there
-                            var wall = MakeWall(neighbour);
-
-                            // MAX
-                            if (wall.Position.x > _grid.Max.x)
-                                _grid.Max.x = wall.Position.x;
-
-                            if (wall.Position.y > _grid.Max.y)
-                                _grid.Max.y = wall.Position.y;
-
-                            // MIN
-                            if (wall.Position.x < _grid.Min.x)
-                                _grid.Min.x = wall.Position.x;
-
-                            if (wall.Position.y < _grid.Min.y)
-                                _grid.Min.y = wall.Position.y;
+                            var floorTile = ScriptableObject.CreateInstance<WallTile>();
+                            floorTile.colliderType = Tile.ColliderType.None;
+                            floorTile.color =  GameSettings.Instance.WallTileData.Color;
+                            floorTile.sprite = GameSettings.Instance.WallTileData.Sprite;
+                            
+                            Tilemap.SetTile(neighbour, floorTile);
                         }
                     }
                 }
 
-
-                // MAX
-                if (cellData.Position.x > _grid.Max.x)
-                    _grid.Max.x = cellData.Position.x;
-
-                if (cellData.Position.y > _grid.Max.y)
-                    _grid.Max.y = cellData.Position.y;
-
-                // MIN
-                if (cellData.Position.x < _grid.Min.x)
-                    _grid.Min.x = cellData.Position.x;
-
-                if (cellData.Position.y < _grid.Min.y)
-                    _grid.Min.y = cellData.Position.y;
+                if (tilepos.x == Tilemap.origin.x + Tilemap.size.x - 1)
+                {
+                    tilepos.x = Tilemap.origin.x;
+                    tilepos.y++;
+                }
+                else tilepos.x++;
             }
         }
 
-        private CellData MakeWall(Vector2Int position)
+        public List<Vector3Int> GetNeighboursByPosition(Vector3Int position)
         {
-            var wallData = new CellData(position,
-                CellType.Wall,
-                GameSettings.Instance.wallRenderInfo, false);
-
-            _floorCells.Add(wallData);
-            _floorPositions.Add(position);
-
-            return wallData;
+            var left = position + Vector3Int.left;
+            var top = position + Vector3Int.up;
+            var right = position + Vector3Int.right;
+            var bottom = position + Vector3Int.down;
+            var topLeft = position + Vector3Int.left + Vector3Int.up;
+            var topRight = position + Vector3Int.right + Vector3Int.up;
+            var bottomRight = position + Vector3Int.right + Vector3Int.down;
+            var bottomLeft = position + Vector3Int.left + Vector3Int.down;
+            return new List<Vector3Int> {left, top, right, bottom, topLeft, topRight, bottomRight, bottomLeft};
         }
 
 //        private List<CellData> BoxSweep(Rect rect)

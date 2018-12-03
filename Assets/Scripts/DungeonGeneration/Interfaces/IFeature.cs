@@ -7,12 +7,6 @@ namespace DungeonGeneration.Interfaces
     public interface IFeature
     {
         /// <summary>
-        /// Get all the cells this feature will occupy
-        /// </summary>
-        /// <returns></returns>
-        List<CellData> GetCells(HashSet<Vector2Int> existingTiles);
-
-        /// <summary>
         /// Number of features this feature can make
         /// </summary>
         /// <returns></returns>
@@ -30,12 +24,9 @@ namespace DungeonGeneration.Interfaces
         /// <returns></returns>
         bool CanMakeNewFeature();
 
-        bool Contains(Vector2Int point);
+        bool Contains(Vector3Int point);
 
-        List<Vector2Int> GetExits();
-        void AddExit(Vector2Int exit);
-        
-        void SetPosition(Vector2Int position);
-        Vector2Int GetPosition();
+        List<Vector3Int> GetExits();
+        void AddExit(Vector3Int exit);
     }
 }

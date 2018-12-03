@@ -3,8 +3,10 @@ using System.Linq;
 using DungeonGeneration;
 using DungeonGeneration.Interfaces;
 using DungeonGeneration.Structs;
+using DungeonGeneration.Tiles;
 using Singletons;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using UnityEngine.XR.WSA.Persistence;
 
 namespace Pathfinding
@@ -15,47 +17,51 @@ namespace Pathfinding
 
 //        private AstarNode[,] _nodes;
         private HashSet<AstarNode> _checked;
-        private SortedList<Vector2Int, AstarNode> _toCheck;
+        private SortedList<Vector3Int, AstarNode> _toCheck;
 
-        private Dictionary<Vector2Int, AstarNode> _featureExits, _nodes;
+        private Dictionary<Vector3Int, AstarNode> _featureExits, _nodes;
 
         public void Initialize(Dungeon dungeon)
         {
             _dungeon = dungeon;
-            _nodes = new Dictionary<Vector2Int, AstarNode>();
-            _featureExits = new Dictionary<Vector2Int, AstarNode>();
+            _nodes = new Dictionary<Vector3Int, AstarNode>();
+            _featureExits = new Dictionary<Vector3Int, AstarNode>();
 
-            Vector2Int position = Vector2Int.zero;
-            for (int i = 0; i < dungeon.GridSize.x * dungeon.GridSize.y; i++)
+            // loop through all the tiles
+            Vector3Int tilepos = dungeon.Tilemap.origin;
+
+            for (int i = 0; i < dungeon.Tilemap.size.x * dungeon.Tilemap.size.y; i++)
             {
-                CellData cell;
-                if (dungeon.TryGetCell(position, out cell))
-                {
-                    var node = new AstarNode(position, null, dungeon);
+                FloorTile tile = dungeon.Tilemap.GetTile<FloorTile>(tilepos);
 
-                    foreach (Vector2Int neighbour in cell.Neighbours)
+                if (tile != null)
+                {
+                    var node = new AstarNode(tilepos, null, dungeon);
+
+                    foreach (Vector3Int neighbour in dungeon.GetNeighboursByPosition(tilepos))
                     {
-                        if (dungeon.TryGetCell(neighbour, out cell))
+                        FloorTile neighbourTile = dungeon.Tilemap.GetTile<FloorTile>(neighbour);
+                        if (neighbourTile != null)
                         {
                             node.Neighbours.Add(neighbour);
                         }
                     }
 
-                    _nodes.Add(position, node);
+                    _nodes.Add(tilepos, node);
                 }
 
-                if (position.x == dungeon.GridSize.x - 1)
+                if (tilepos.x == dungeon.Tilemap.origin.x + dungeon.Tilemap.size.x - 1)
                 {
-                    position.x = 0;
-                    position.y++;
+                    tilepos.x = dungeon.Tilemap.origin.x;
+                    tilepos.y++;
                 }
-                else position.x++;
+                else tilepos.x++;
             }
 
             foreach (IFeature feature in dungeon.AllFeatures)
             {
                 var exits = feature.GetExits();
-                foreach (Vector2Int exit in exits)
+                foreach (Vector3Int exit in exits)
                 {
                     if (!_featureExits.ContainsKey(exit))
                     {
@@ -69,16 +75,12 @@ namespace Pathfinding
                         _featureExits[exit].Neighbours.AddRange(exits);
                     }
 
-                    var c = dungeon.GetCell(exit);
-                    c.RenderInfo = GameSettings.Instance.debugRenderInfo1;
-                    c.Discovered = true;
-                    dungeon.SetCell(exit, c);
                     _featureExits[exit].Neighbours = _featureExits[exit].Neighbours.Distinct().ToList();
                 }
             }
         }
 
-        public AstarPath GetPath(Vector2Int start, Vector2Int end)
+        public AstarPath GetPath(Vector3Int start, Vector3Int end)
         {
             AstarPath path = null;
             IFeature startFeature = null, endFeature = null;
@@ -98,25 +100,31 @@ namespace Pathfinding
 
             if (startFeature != null && endFeature != null)
             {
-                List<AstarPath> paths = GetAllPathsBetweenExits(startFeature.GetExits(), endFeature.GetExits());
-                if (paths != null)
+                if (startFeature != endFeature)
                 {
-                    paths.Sort((x, y) => x.Distance.CompareTo(y.Distance));
-                    path = paths[0];
-                    path.Start = start;
-                    path.End = end;
+                    List<AstarPath> paths = GetAllPathsBetweenExits(startFeature.GetExits(), endFeature.GetExits());
+                    if (paths != null)
+                    {
+                        paths.Sort((x, y) => x.Distance.CompareTo(y.Distance));
+                        path = paths[0];
+                        path.Start = start;
+                        path.End = end;
+                    }
+                }
+                else
+                {
+                    
                 }
             }
+
 
             return path;
         }
 
-        public List<Vector2Int> GetPathBetweenPoints(Vector2Int start, Vector2Int end)
+        public List<Vector3Int> GetPathBetweenPoints(Vector3Int start, Vector3Int end)
         {
-            HashSet<Vector2Int> checkedNodes = new HashSet<Vector2Int>();
+            HashSet<Vector3Int> checkedNodes = new HashSet<Vector3Int>();
             List<AstarNode> uncheckedNodes = new List<AstarNode>();
-            CellData c = null;
-
             var toCheck = _nodes[start].Clone();
 
             toCheck.CalculateNeighbours(ref checkedNodes, ref uncheckedNodes, ref _nodes, end);
@@ -148,12 +156,12 @@ namespace Pathfinding
             return path;
         }
 
-        private List<AstarPath> GetAllPathsBetweenExits(List<Vector2Int> starts, List<Vector2Int> ends)
+        private List<AstarPath> GetAllPathsBetweenExits(List<Vector3Int> starts, List<Vector3Int> ends)
         {
             List<AstarPath> paths = new List<AstarPath>();
-            foreach (Vector2Int start in starts)
+            foreach (Vector3Int start in starts)
             {
-                foreach (Vector2Int end in ends)
+                foreach (Vector3Int end in ends)
                 {
                     AstarPath path = GetPathbetweenExits(start, end);
                     if (path != null)
@@ -166,14 +174,14 @@ namespace Pathfinding
             return paths.Count > 0 ? paths : null;
         }
 
-        private AstarPath GetPathbetweenExits(Vector2Int start, Vector2Int end)
+        private AstarPath GetPathbetweenExits(Vector3Int start, Vector3Int end)
         {
             if (start == end)
             {
-                return new AstarPath(_dungeon, new List<Vector2Int> {end});
+                return new AstarPath(_dungeon, new List<Vector3Int> {end});
             }
 
-            HashSet<Vector2Int> checkedNodes = new HashSet<Vector2Int>();
+            HashSet<Vector3Int> checkedNodes = new HashSet<Vector3Int>();
             List<AstarNode> uncheckedNodes = new List<AstarNode>();
 
             var toCheck = _featureExits[start].Clone();
@@ -197,7 +205,7 @@ namespace Pathfinding
                 uncheckedNodes.Sort((x, y) => x.CompareTo(y));
             }
 
-            AstarPath path = new AstarPath(_dungeon, new List<Vector2Int>());
+            AstarPath path = new AstarPath(_dungeon, new List<Vector3Int>());
             if (endNode != null)
             {
                 var pathFromNode = endNode.GetPath(out path.Distance);

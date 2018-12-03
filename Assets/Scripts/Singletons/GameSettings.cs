@@ -1,15 +1,14 @@
 ﻿using DungeonGeneration;
+using Rendering;
 using Structs;
+using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace Singletons
 {
     public class GameSettings : Singleton<GameSettings>
     {
-        public RenderInfo wallRenderInfo;
-
-        public RenderInfo roomRenderInfo;
-
-        public RenderInfo playerRenderInfo;
-        public RenderInfo debugRenderInfo1, debugRenderInfo2, debugRenderInfo3;
+        public RenderInfo FloorTileData, WallTileData;
+        public Color HiddenColor;
     }
 }

@@ -5,6 +5,7 @@ using DungeonGeneration.Structs;
 using Enums;
 using Singletons;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace DungeonGeneration.FeatureFactories
 {
@@ -12,12 +13,12 @@ namespace DungeonGeneration.FeatureFactories
     {
         private readonly List<RoomData> _currentRooms = new List<RoomData>();
 
-        public bool TryCreateFeature(FeaturePosition position, Vector2Int size, HashSet<Vector2Int> existingTiles, ref IFeature feature)
+        public bool TryCreateFeature(FeaturePosition position, Vector2Int size, Tilemap tilemap, ref IFeature feature)
         {
-            Vector2Int entrance = position;
+            Vector3Int entrance = position;
             switch (position.Direction)
             {
-                case Direction.Bottom:
+                case Direction.Top:
                     position.x = position.x - Random.Range(1, size.x-1);
                     position.y = position.y+1;
                     break;
@@ -25,7 +26,7 @@ namespace DungeonGeneration.FeatureFactories
                     position.x = position.x+1;
                     position.y = position.y - Random.Range(1, size.y-1);
                     break;
-                case Direction.Top:
+                case Direction.Bottom:
                     position.x = position.x - Random.Range(1, size.x-1);
                     position.y = position.y - size.y;
                     break;
@@ -35,13 +36,12 @@ namespace DungeonGeneration.FeatureFactories
                     break;
             }
 
-            if (CanCreateFeature(position, size, existingTiles))
+            if (CanCreateFeature(position, size, tilemap))
             {
+                Debug.Log($"room at {position.ToString()}");
                 // we aren't gonna check if we can add here, we just gonna add the room
-                // even if it overlaps, checking should be done where this is called
-//                RenderInfo r = new RenderInfo(_currentRooms.Count.ToString());
-//                RoomData room = new RoomData(position, size, entrance,r);                
-                RoomData room = new RoomData(position, size, entrance, GameSettings.Instance.roomRenderInfo);                
+                // even if it overlaps, checking should be done where this is called          
+                RoomData room = new RoomData(position, size, entrance, tilemap);                
                 _currentRooms.Add(room);
                 feature = room;
                 
@@ -50,9 +50,9 @@ namespace DungeonGeneration.FeatureFactories
             return false;
         }
 
-        public bool CanCreateFeature(FeaturePosition position, Vector2Int size, HashSet<Vector2Int> existingTiles)
+        public bool CanCreateFeature(FeaturePosition position, Vector2Int size, Tilemap tilemap)
         {
-            Vector2Int p = Vector2Int.zero - Vector2Int.one;
+            Vector3Int p = new Vector3Int(-1,-1, 0);
             size += Vector2Int.one*2;
             // Check if there is space for a new room
             for (int i = 0; i < size.x * size.y; i++)
@@ -60,7 +60,11 @@ namespace DungeonGeneration.FeatureFactories
                 // if we find a tile on the position we are checking that means
                 // we cant add the room there since there's probably something
                 // there already
-                if (existingTiles.Contains(p + position)) return false;
+                if (tilemap.HasTile(p + position))
+                {
+                    Debug.Log($"{p+position} {tilemap.GetTile(p+position).name}");
+                    return false;
+                }
 
                 // increament the position we want to check after we've checked the
                 // current position
@@ -75,17 +79,6 @@ namespace DungeonGeneration.FeatureFactories
             // we didnt find any existing tiles in the place we want to
             // add the room, so theres space to add it
             return true;
-        }
-
-        public List<CellData> GetCellsFromAllFeatures(HashSet<Vector2Int> existingTiles)
-        {
-            List<CellData> cells = new List<CellData>();
-            foreach (RoomData room in _currentRooms)
-            {
-                cells.AddRange(room.GetCells(existingTiles));
-            }
-
-            return cells;
         }
     }
 }

@@ -2,35 +2,36 @@
 using System.Collections.Generic;
 using DungeonGeneration;
 using DungeonGeneration.Structs;
+using DungeonGeneration.Tiles;
 using Enums;
 using Extensions;
 using Pathfinding;
-using PhiOS.Scripts.PhiOS;
 using Rendering;
 using Structs;
 using UnityEngine;
-using Display = PhiOS.Scripts.PhiOS.Display;
+using UnityEngine.Tilemaps;
 
 namespace Singletons
 {
     public class Player : Singleton<Player>
     {
-        //private Vector2Int CameraPos => Position - new Vector2Int(Display.GetDisplayWidth() / 2, Display.GetDisplayHeight() / 2);
-        private CellData _currCell;
-        private CellData _lastCell;
-
-        public Vector2Int Position;
         public bool CanControl;
-        public float FieldOfView;
+        public int FieldOfView;
 
         private AstarPath _path;
+        private HashSet<Vector3Int> _visibleTiles;
 
-        public void Spawn(Vector2Int pos)
+        public void Spawn(Vector3Int pos)
         {
-            Position = pos;
+            transform.position = pos;
             CanControl = true;
-            TurnSystem.Instance.PlayerTurn += PlayerTurn;
-            UpdateFov();
+            SetFieldOfView(DungeonGenerator.Instance.CurrentDungeon.Tilemap.WorldToCell(transform.position),
+                FieldOfView, true);
+        }
+
+        public bool InLineOfSight(Vector3Int position)
+        {
+            return _visibleTiles.Contains(position);
         }
 
         private void Update()
@@ -38,77 +39,64 @@ namespace Singletons
             if (Input.GetMouseButtonDown(0))
             {
                 _path = DungeonGenerator.Instance.CurrentDungeon.Astar.GetPath(
-                    Position,
-                    CellRenderer.Instance.CameraPosition + Mouse.currentCell.position.ToVector2Int());
+                    DungeonGenerator.Instance.CurrentDungeon.Tilemap.WorldToCell(transform.position),
+                    DungeonGenerator.Instance.CurrentDungeon.Tilemap.WorldToCell(
+                        Camera.main.ScreenToWorldPoint(Input.mousePosition)));
             }
+
+            if (_path == null || _path.Completed || !TurnSystem.Instance.PlayerTurn)
+                return;
+
+            SetFieldOfView(DungeonGenerator.Instance.CurrentDungeon.Tilemap.WorldToCell(transform.position),
+                FieldOfView, false);
+
+            transform.position = _path.GetNextPoint();
+
+            SetFieldOfView(DungeonGenerator.Instance.CurrentDungeon.Tilemap.WorldToCell(transform.position),
+                FieldOfView, true);
+
+            TurnSystem.Instance.PlayerTurn = false;
         }
 
-        private IEnumerator PlayerTurn()
-        {
-            yield return new WaitUntil(() => _path != null && !_path.Completed && CanControl);
-            
-            Position = _path.GetNextPoint();
-            UpdateFov();
-            
-            TurnSystem.Instance.EndPlayerTurn();
-        }
-
-        private void UpdateFov()
-        {
-            if (_currCell == null || _currCell.Position != Position)
-            {
-                if (_lastCell?.RenderInfo.Representation != null)
-                {
-                    SetFieldOfView(_lastCell.Position, FieldOfView, false);
-                    DungeonGenerator.Instance.CurrentDungeon.SetCell(_lastCell.Position, _lastCell);
-                }
-
-                if (DungeonGenerator.Instance.CurrentDungeon.TryGetCell(Position, out _currCell))
-                {
-                    _lastCell = new CellData(_currCell.Position, _currCell.Type, _currCell.RenderInfo,
-                        _currCell.CanWalkOn);
-                    _currCell.RenderInfo = GameSettings.Instance.playerRenderInfo;
-                    _currCell.Visible = true;
-                    DungeonGenerator.Instance.CurrentDungeon.SetCell(_currCell.Position, _currCell);
-                    SetFieldOfView(Position, FieldOfView, true);
-                    Debug.Log("Updating FOV");
-                }
-            }
-        }
-
-
-        private void SetFieldOfView(Vector2Int position, float radius, bool visible)
+        private void SetFieldOfView(Vector3Int position, int radius, bool visible)
         {
             Dungeon currentDungeon = DungeonGenerator.Instance.CurrentDungeon;
-            int width = currentDungeon.GridSize.x;
-            int height = currentDungeon.GridSize.y;
+            currentDungeon.Tilemap.SetColor(position,
+                visible ? Color.white : GameSettings.Instance.HiddenColor);
 
-            Vector2 center = new Vector2(position.x + .5f,
-                position.y + .5f);
+            currentDungeon.Tilemap.SetTileFlags(position, TileFlags.None);
+
             int numRays = 100;
-
             for (int r = 0; r < numRays; r++)
             {
                 float dirX = Mathf.Sin(2 * Mathf.PI * r / numRays);
                 float dirY = Mathf.Cos(2 * Mathf.PI * r / numRays);
                 Vector2 direction = new Vector2(dirX, dirY);
-
                 for (int d = 1; d < radius; d++)
                 {
-                    Vector2 relative = center + direction * d;
+                    Vector2 relative = position.ToVector2Int() + direction * d;
 
-                    Vector2Int tilePos = relative.ToVector2Int();
-                    CellData cell = null;
-                    if (currentDungeon.TryGetCell(tilePos, out cell))
+                    Vector3Int tilePos = currentDungeon.Tilemap.WorldToCell(relative);
+                    if (!currentDungeon.Tilemap.HasTile(tilePos)) continue;
+
+                    currentDungeon.Tilemap.SetColor(tilePos,
+                        visible ? Color.white : GameSettings.Instance.HiddenColor);
+                    currentDungeon.Tilemap.SetTileFlags(tilePos, TileFlags.None);
+
+                    if (visible)
                     {
-                        cell.Discovered = true;
-                        cell.Visible = visible;
-                        currentDungeon.SetCell(tilePos, cell);
+                        if (!_visibleTiles.Contains(tilePos))
+                            _visibleTiles.Add(tilePos);
+                    }
+                    else
+                    {
+                        if (_visibleTiles.Contains(tilePos))
+                            _visibleTiles.Remove(tilePos);
+                    }
 
-                        if (cell.Type == CellType.Wall)
-                        {
-                            break;
-                        }
+                    if (currentDungeon.Tilemap.GetTile<WallTile>(tilePos) != null)
+                    {
+                        break;
                     }
                 }
             }
