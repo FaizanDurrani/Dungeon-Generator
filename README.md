@@ -4,7 +4,7 @@
 
 ### Features
 1. Basic A* implementation
-2. Basic Rogue-Like Player script
+2. Basic Rogue-Like Player script with Fog of War
 3. Feature-based Dungeon generation
 
 ### Todo
